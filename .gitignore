@@ -5,3 +5,5 @@ javacode/.idea/compiler.xml
 javacode/.idea/inspectionProfiles/Project_Default.xml
 javacode/.idea/misc.xml
 javacode/.idea/workspace.xml
+*.class
+javacode/.idea/uiDesigner.xml
