@@ -1,14 +1,18 @@
 package com.snhua.format;
 
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-
+@Slf4j
 public class MapUtil {
     /**
      * 使用 Map按key进行排序
@@ -61,6 +65,28 @@ public class MapUtil {
             }
         }
         return mapRequest;
+    }
+    /**
+     * xml 转换成map.
+     *
+     * @param xml
+     * @return
+     */
+    public static Map<String, String> xmlToMap(String xml) {
+        //解析返回的xml
+        String temp = xml.replaceAll("<!\\[CDATA\\[", "").replaceAll("]]>", "");
+
+        log.debug("处理后的参数：{}", temp);
+
+        XmlMapper xmlMapper = new XmlMapper();
+
+        try {
+            return xmlMapper.readValue(temp, new TypeReference<Map<String, String>>() {});
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+
     }
 
     /**
