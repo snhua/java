@@ -57,6 +57,8 @@ public class Md5SignUtil {
         return md5(reqParam);
     }
 
+
+
     public static void main(String[] arg) throws Exception {
         Map<String, String> routerParaMap = new HashMap<>();
         routerParaMap.put("amount", "1000");          // 金额
