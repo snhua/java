@@ -3,7 +3,7 @@ package com.snhua.encryption.rsa.common;
 /*
  * Copyright (C), 2002-2013, 苏宁易购电子商务有限公司
  * FileName: RSAUtil.java
- * Author:   王子银
+ * Author:   snhua
  * Date:     2013-9-30 下午02:25:56
  * Description: //模块目的、功能描述
  * History: //修改记录
@@ -76,6 +76,8 @@ public class RSAUtil {
      * SHA1 RSA算法
      */
     private static final String SHA1_WITH_RSA = "SHA1WithRSA";
+    private static final int MAX_ENCRYPT_BLOCK = 117;
+    private static final int MAX_DECRYPT_BLOCK = 256;
 
     /**
      * 生成1024位RSA密钥对
@@ -481,6 +483,76 @@ public class RSAUtil {
         byte[] result = cipher.doFinal(miwen);
         return new String(result);
     }
+
+    public static byte[] encryptData(byte[] data, PublicKey publicKey) {
+        try {
+            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWITHSHA-1ANDMGF1PADDING");
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+
+            int inputLen = data.length;
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            int offSet = 0;
+            byte[] cache;
+            int i = 0;
+            while (inputLen - offSet > 0) {
+                if (inputLen - offSet > MAX_ENCRYPT_BLOCK) {
+                    cache = cipher.doFinal(data, offSet, MAX_ENCRYPT_BLOCK);
+                } else {
+                    cache = cipher.doFinal(data, offSet, inputLen - offSet);
+                }
+                out.write(cache, 0, cache.length);
+                i++;
+                offSet = i * MAX_ENCRYPT_BLOCK;
+            }
+            byte[] encryptedData = out.toByteArray();
+            out.close();
+            return encryptedData;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static byte[] decryptData(byte[] encryptedData, PrivateKey privateKey) {
+        try {
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+
+            int inputLen = encryptedData.length;
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            int offSet = 0;
+            byte[] cache;
+            int i = 0;
+            while (inputLen - offSet > 0) {
+                if (inputLen - offSet > MAX_DECRYPT_BLOCK) {
+                    cache = cipher.doFinal(encryptedData, offSet,
+                            MAX_DECRYPT_BLOCK);
+                } else {
+                    cache = cipher.doFinal(encryptedData, offSet, inputLen
+                            - offSet);
+                }
+                out.write(cache, 0, cache.length);
+                i++;
+                offSet = i * MAX_DECRYPT_BLOCK;
+            }
+            byte[] decryptedData = out.toByteArray();
+            out.close();
+            return decryptedData;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
+    public static String encryptDataAndBase64ToString(String source, String publicKey) throws Exception {
+        PublicKey pk = getPublicKey(publicKey);
+        byte[] data = encryptData(source.getBytes(), pk);
+        byte[] str = java.util.Base64.getEncoder().encode(data);
+        return new String(str);
+
+
+    }
+
 
     public static void main(String[] args) throws Exception {
         createKey("D:/RSA/public.key", "D:/RSA/private.key", 1024);
