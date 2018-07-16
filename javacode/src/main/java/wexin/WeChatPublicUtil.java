@@ -1,10 +1,12 @@
 package wexin;
 
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.fluent.Request;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -190,5 +192,27 @@ public class WeChatPublicUtil {
     public String getOpenIdByWcode(String wcode, String appId, String secret) {
         AuthToken token = WeChatPublicUtil.getAuthToken(appId, secret, "", wcode);
         return token.getOpenid();
+    }
+
+    public static String getAccessToken(String appId, String secret) {
+        String accessToken = null;
+        try {
+            URIBuilder builder = new URIBuilder(WxApi.WX_ACCESS_TOKEN_URL);
+            builder.addParameter("grant_type", "client_credential");
+            builder.addParameter("appid", appId);
+            builder.addParameter("secret", secret);
+
+            String result = Request.Get(builder.build())
+                    .execute().returnContent().asString();
+
+            if (!StringUtils.isEmpty(result)) {
+                accessToken = JSON.parseObject(result).getString("access_token");
+            } else {
+                log.error("微信AccessToken接口返回结果为空，appid：{}，secret：{}", appId, secret);
+            }
+        } catch (Exception e) {
+            log.error("获取微信Token失败，{}", e.getMessage());
+        }
+        return accessToken;
     }
 }

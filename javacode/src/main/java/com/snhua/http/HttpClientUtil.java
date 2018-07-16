@@ -1,7 +1,7 @@
 package com.snhua.http;
 
-import com.snhua.format.MapUtil;
 import com.snhua.format.UrlParamUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -14,25 +14,18 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
+import org.springframework.util.FileCopyUtils;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +34,7 @@ import java.util.Set;
 /**
  * Created by dell on 2015/1/13.
  */
+@Slf4j
 public class HttpClientUtil {
 
 
@@ -314,4 +308,56 @@ public class HttpClientUtil {
         }
     }
 
+    /**
+     * 获取网络图片文件流
+     *
+     * @param GifUrl 图片网络地址
+     * @return 图片流
+     */
+    public static InputStream ImageRequest(String GifUrl) {
+        try {
+            URL url = new URL(GifUrl);
+            //打开链接
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            //设置请求方式为"GET"
+            conn.setRequestMethod("GET");
+            //超时响应时间为5秒
+            conn.setConnectTimeout(5 * 1000);
+            //通过输入流获取图片数据
+            return conn.getInputStream();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * 下载文件
+     * @param data 文件内容
+     * @param contentType
+     * @param fileName
+     */
+    public void download(HttpServletResponse response, byte[] data, String contentType, String fileName) {
+        try (OutputStream os = response.getOutputStream()) {
+            // 检测文件信息
+            if (null != data) {
+                // 设置响应类型
+                response.setContentType(contentType);
+
+                // 处理中文文件名
+                 fileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
+
+                // 处理文件名中文乱码
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"; filename*=utf-8''" + fileName);
+
+                // 复制文件内容到输出流
+                FileCopyUtils.copy(data, os);
+            } else {
+                log.info("下载文件失败，文件不存在，文件名：{}", fileName);
+            }
+        } catch (Exception e) {
+            log.error("下载文件失败，文件名：{}，{}", fileName, e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }
